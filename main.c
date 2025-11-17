@@ -2,14 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 #define TAMANHO_TABELA 101
 #define MAX_NOME 50
-#define MAX_HASH 65 // 64 chars + '\0'
+#define MAX_HASH 65   // 64 chars + '\0'
 
-// ------------------------------------
+
 // Estruturas
-// ------------------------------------
 
 typedef struct NoUsuario {
     char nome_usuario[MAX_NOME];
@@ -19,54 +19,69 @@ typedef struct NoUsuario {
 
 typedef NoUsuario* TabelaHash[TAMANHO_TABELA];
 
-// ------------------------------------
-// Funções de Hash
-// ------------------------------------
 
-// Hash para strings (djb2)
+// Auxiliares
+
+
+void strip_newline(char *s) {
+    size_t n = strlen(s);
+    if (n > 0 && s[n - 1] == '\n')
+        s[n - 1] = '\0';
+}
+
+
+bool read_line(char *buf, size_t size) {
+    if (fgets(buf, size, stdin) == NULL) return false;
+    strip_newline(buf);
+    return true;
+}
+
+
+// Funções de Hash
+
+
+
 int funcaoHash(const char *str) {
     unsigned long hash = 5381;
     int c;
 
-    while ((c = *str++)) {
+    while ((c = *str++))
         hash = ((hash << 5) + hash) + c;
-    }
 
     return (hash % TAMANHO_TABELA + TAMANHO_TABELA) % TAMANHO_TABELA;
 }
 
-// Hash melhorado para senha (djb2)
+// djb2 para senha
 unsigned long hashSenha(const char *senha) {
     unsigned long hash = 5381;
     int c;
 
-    while ((c = *senha++)) {
+    while ((c = *senha++))
         hash = ((hash << 5) + hash) + c;
-    }
 
     return hash;
 }
 
-// converte hash numérico → hexadecimal
+// Converte hash numérico em string hexadecimal
 void gerarHashSenha(const char *senha, char *saida) {
     unsigned long h = hashSenha(senha);
     sprintf(saida, "%016lX", h);
 }
 
-// ------------------------------------
-// Funções obrigatórias
-// ------------------------------------
+// ===============================
+// Funções da Tabela Hash
+// ===============================
 
 void inicializaHash(TabelaHash tab) {
-    for (int i = 0; i < TAMANHO_TABELA; i++) {
+    for (int i = 0; i < TAMANHO_TABELA; i++)
         tab[i] = NULL;
-    }
 }
 
 bool cadastraUsuario(TabelaHash tab, const char *username, const char *password) {
     int indice = funcaoHash(username);
     NoUsuario *atual = tab[indice];
 
+    // Verifica duplicado
     while (atual != NULL) {
         if (strcmp(atual->nome_usuario, username) == 0) {
             printf("❌ ERRO: Usuário '%s' já existe.\n", username);
@@ -75,9 +90,9 @@ bool cadastraUsuario(TabelaHash tab, const char *username, const char *password)
         atual = atual->prox;
     }
 
-    NoUsuario *novo = (NoUsuario *)malloc(sizeof(NoUsuario));
+    NoUsuario *novo = malloc(sizeof(NoUsuario));
     if (!novo) {
-        perror("ERRO malloc");
+        perror("malloc");
         exit(1);
     }
 
@@ -86,10 +101,11 @@ bool cadastraUsuario(TabelaHash tab, const char *username, const char *password)
 
     gerarHashSenha(password, novo->hash_senha);
 
+
     novo->prox = tab[indice];
     tab[indice] = novo;
 
-    printf("✔ Usuário '%s' cadastrado com sucesso! (índice %d)\n", username, indice);
+    printf("✔ Usuário '%s' cadastrado! (índice %d)\n", username, indice);
     return true;
 }
 
@@ -119,17 +135,20 @@ bool login(TabelaHash tab, const char *username, const char *password) {
 
 bool removeUsuario(TabelaHash tab, const char *username) {
     int indice = funcaoHash(username);
+
     NoUsuario *atual = tab[indice];
     NoUsuario *anterior = NULL;
 
     while (atual != NULL) {
         if (strcmp(atual->nome_usuario, username) == 0) {
+
             if (anterior == NULL)
                 tab[indice] = atual->prox;
             else
                 anterior->prox = atual->prox;
 
             free(atual);
+
             printf("🗑 Usuário '%s' removido.\n", username);
             return true;
         }
@@ -138,20 +157,23 @@ bool removeUsuario(TabelaHash tab, const char *username) {
         atual = atual->prox;
     }
 
-    printf("❌ Usuário não encontrado.\n");
+    printf("❌ Usuário '%s' não encontrado.\n", username);
     return false;
 }
 
 void imprimeTabela(TabelaHash tab) {
     printf("\n===== TABELA HASH =====\n");
+
     for (int i = 0; i < TAMANHO_TABELA; i++) {
         if (tab[i] != NULL) {
             printf("[%d] -> ", i);
+
             NoUsuario *aux = tab[i];
             while (aux != NULL) {
                 printf("(%s | %s) -> ", aux->nome_usuario, aux->hash_senha);
                 aux = aux->prox;
             }
+
             printf("NULL\n");
         }
     }
@@ -169,16 +191,16 @@ void liberaHash(TabelaHash tab) {
     }
 }
 
-// ------------------------------------
-// MENU
-// ------------------------------------
+// MENU 
 
 int main() {
     TabelaHash usuarios;
     inicializaHash(usuarios);
 
-    int opc;
-    char user[MAX_NOME], senha[50];
+    int opc = -1;
+    char entrada[128];
+    char user[MAX_NOME];
+    char senha[50];
 
     do {
         printf("\n====== MENU ======\n");
@@ -188,28 +210,46 @@ int main() {
         printf("4 - Imprimir tabela\n");
         printf("0 - Sair\n");
         printf("Escolha: ");
-        scanf("%d", &opc);
+
+        if (!read_line(entrada, sizeof(entrada))) break;
+
+        char *endptr;
+        long val = strtol(entrada, &endptr, 10);
+
+        bool invalido = (endptr == entrada);
+
+        while (*endptr) {
+            if (!isspace((unsigned char)*endptr)) invalido = true;
+            endptr++;
+        }
+
+        if (invalido) {
+            printf("❌ Entrada inválida. Digite um número válido.\n");
+            continue;
+        }
+
+        opc = (int)val;
 
         switch (opc) {
             case 1:
                 printf("Username: ");
-                scanf("%s", user);
+                read_line(user, sizeof(user));
                 printf("Senha: ");
-                scanf("%s", senha);
+                read_line(senha, sizeof(senha));
                 cadastraUsuario(usuarios, user, senha);
                 break;
 
             case 2:
                 printf("Username: ");
-                scanf("%s", user);
+                read_line(user, sizeof(user));
                 printf("Senha: ");
-                scanf("%s", senha);
+                read_line(senha, sizeof(senha));
                 login(usuarios, user, senha);
                 break;
 
             case 3:
                 printf("Username a remover: ");
-                scanf("%s", user);
+                read_line(user, sizeof(user));
                 removeUsuario(usuarios, user);
                 break;
 
@@ -223,8 +263,10 @@ int main() {
                 break;
 
             default:
-                printf("Opção inválida.\n");
+                printf("❌ Opção inválida.\n");
+                break;
         }
+
     } while (opc != 0);
 
     return 0;
