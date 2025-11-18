@@ -68,9 +68,8 @@ void gerarHashSenha(const char *senha, char *saida) {
     sprintf(saida, "%016lX", h);
 }
 
-// ===============================
+
 // Funções da Tabela Hash
-// ===============================
 
 void inicializaHash(TabelaHash tab) {
     for (int i = 0; i < TAMANHO_TABELA; i++)
@@ -84,7 +83,7 @@ bool cadastraUsuario(TabelaHash tab, const char *username, const char *password)
     // Verifica duplicado
     while (atual != NULL) {
         if (strcmp(atual->nome_usuario, username) == 0) {
-            printf("❌ ERRO: Usuário '%s' já existe.\n", username);
+            printf("ERRO: Usuário '%s' já existe.\n", username);
             return false;
         }
         atual = atual->prox;
@@ -105,7 +104,7 @@ bool cadastraUsuario(TabelaHash tab, const char *username, const char *password)
     novo->prox = tab[indice];
     tab[indice] = novo;
 
-    printf("✔ Usuário '%s' cadastrado! (índice %d)\n", username, indice);
+    printf("Usuário '%s' cadastrado! (índice %d)\n", username, indice);
     return true;
 }
 
@@ -119,17 +118,17 @@ bool login(TabelaHash tab, const char *username, const char *password) {
     while (atual != NULL) {
         if (strcmp(atual->nome_usuario, username) == 0) {
             if (strcmp(atual->hash_senha, hash_digitado) == 0) {
-                printf("🔓 Login bem-sucedido!\n");
+                printf(" Login bem-sucedido!\n");
                 return true;
             } else {
-                printf("❌ Senha incorreta.\n");
+                printf("Senha incorreta.\n");
                 return false;
             }
         }
         atual = atual->prox;
     }
 
-    printf("❌ Usuário não encontrado.\n");
+    printf("Usuário não encontrado.\n");
     return false;
 }
 
@@ -149,7 +148,7 @@ bool removeUsuario(TabelaHash tab, const char *username) {
 
             free(atual);
 
-            printf("🗑 Usuário '%s' removido.\n", username);
+            printf("Usuário '%s' removido.\n", username);
             return true;
         }
 
@@ -157,7 +156,7 @@ bool removeUsuario(TabelaHash tab, const char *username) {
         atual = atual->prox;
     }
 
-    printf("❌ Usuário '%s' não encontrado.\n", username);
+    printf("Usuário '%s' não encontrado.\n", username);
     return false;
 }
 
@@ -224,7 +223,7 @@ int main() {
         }
 
         if (invalido) {
-            printf("❌ Entrada inválida. Digite um número válido.\n");
+            printf("Entrada inválida. Digite um número válido.\n");
             continue;
         }
 
@@ -263,7 +262,7 @@ int main() {
                 break;
 
             default:
-                printf("❌ Opção inválida.\n");
+                printf("Opção inválida.\n");
                 break;
         }
 

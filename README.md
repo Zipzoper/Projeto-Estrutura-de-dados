@@ -1,5 +1,11 @@
 # 🔐 Sistema de Autenticação com Tabela Hash (C)
 
+Alunos: 
+Pedro Henrique de Araújo Medeiros / 00000853094
+Caio Henrique Almeida de Oliveira / 00000853054
+
+
+
 Projeto desenvolvido para a disciplina **Estrutura de Dados**, utilizando:
 
 - Tabela Hash implementada do zero
